@@ -1,66 +1,77 @@
 import { Context, action, param, state } from "@pocketcomputer/core";
 
 export class App {
-  initialPrompt = `You are the dungeon master for a role-playing game. Use tool calls to navigate
-    the world. Speak in a fast half-whisper.`;
+  initialPrompt = `You are a wild robot known as Rozzum, or Roz for short. You are great with
+    children and wildlife. You answer the user's curious questions about the world using simple
+    language. You can also play games, such as '20 Questions.' Only explain the rules only after
+    calling the 'startGame' tool. In this version of the game, you will think of a word, and the
+    user will need to guess it.`;
 
-  gold = 15;
+  wordList: string[] = [
+    "elephant",
+    "computer",
+    "bicycle",
+    "chocolate",
+    "umbrella",
+    "guitar",
+    "mountain",
+    "telescope",
+    "butterfly",
+    "watermelon"
+  ];
+
+  word: string = "";
+  count: number = 0;
 
   @state
   async main(c: Context) {
-    c.display("Town Square");
-
     c.prompt(this.initialPrompt);
-    c.prompt("The user is in the town square.");
-    c.prompt("They can enter the tavern or talk to the merchant.");
 
-    c.action(this.talk, "Talk to the merchant");
-    c.state(this.tavern, "Enter the tavern");
-  }
-
-  @action
-  talk(c: Context) {
-    c.display("Merchant");
-
-    c.prompt("Involve the user in an engaging conversation.");
-    c.prompt("When voicing the merchant, speak in a thick British accent without whispering.");
+    c.state(this.startGame, "Play 20 Questions");
   }
 
   @state
-  tavern(c: Context) {
-    c.display("Tavern");
+  async startGame(c: Context) {
+    const randomIndex = Math.floor(Math.random() * this.wordList.length);
 
-    c.prompt("The user is in a lively tavern.");
-    c.prompt("There is a bard, a table of adventurers and a burly barkeeper.");
-    c.prompt("Describe the tavern and suggest possible actions.");
+    this.word = this.wordList[randomIndex];
+    this.count = 20;
 
-    c.action(this.buyDrink, "Ask for a drink");
-    c.action(this.joinGroup, "Talk to the adventurers");
-    c.state(this.main, "Leave the tavern");
+    c.prompt(`We're going to play 20 questions. The player needs to guess the word.`);
+    c.prompt(`The word is ${this.word}.`);
+    c.prompt(`Briefly explain the rules to the user. Good luck!`);
+
+    c.action(this.guess, "Make a guess");
+    c.state(this.main, "End the game");
   }
 
   @action
-  buyDrink(c: Context, @param("drink", "The drink to buy") drink: string) {
-    c.display("Buy:");
-    c.display(`Glass of ${drink}`);
+  guess(c: Context, @param("guess", "The word the player guessed") guess: string) {
+    if (guess === this.word) {
+      c.prompt("The user won! Make it exciting. Say 'Wow!' a few times.");
+      c.state(this.startGame, "Restart the game");
 
-    if (this.gold < 5) {
-      c.prompt("The user doesn't have enough gold for a drink.");
       return;
     }
 
-    this.gold -= 5;
+    this.count--;
 
-    c.prompt(`The barkeeper pours the user a large glass of ${drink}.`);
-    c.prompt(`The user has ${this.gold} gold coins remaining.`);
+    if (this.count === 0) {
+      c.prompt("Game over! Reveal that the word was ${this.word}.");
+      c.state(this.startGame, "Restart the game");
+
+      return;
+    }
+
+    c.prompt("Nope! Guess again.");
+    c.prompt("The player has ${this.count} guesses left.");
+    c.prompt(`${this.count < 5 ? "Do" : "Don't"} tell the player how many guesses they have left`);
+
+    c.action(this.hint, "The player asks for a hint");
   }
 
   @action
-  joinGroup(c: Context) {
-    c.display("The Adventure Continues...");
-
-    c.prompt("Explain to the user that this is a demo experience.");
-    c.prompt("They can expand the adventure by running 'npx create-pocket-app' and editing 'app.ts'.");
-    c.prompt("Notice how the demo uses the @action, @state and @param decorators.");
+  hint(c: Context) {
+    c.prompt("Give the player a hint");
   }
 }
