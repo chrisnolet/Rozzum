@@ -8,6 +8,7 @@ import { useState } from "react";
 export default function Home() {
   const [displayMessage, setDisplayMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
 
   const handleReady = async (c: Context) => {
     const app = new App();
@@ -18,7 +19,17 @@ export default function Home() {
     console.log(text);
   };
 
-  const { isConnecting, isConnected, connect, disconnect, audioElementRef } = useRealtime({
+  const handleRecord = () => {
+    if (isRecording) {
+      commit();
+      setIsRecording(false);
+    } else {
+      cancel();
+      setIsRecording(true);
+    }
+  };
+
+  const { isConnecting, isConnected, connect, disconnect, commit, cancel, audioElementRef } = useRealtime({
     tokenUrl: "/api/token",
     voice: "marin",
     isDebug: process.env.NODE_ENV === "development",
@@ -76,17 +87,30 @@ export default function Home() {
                 Edit <code>app.ts</code> to give Roz new abilities.
               </p>
 
-              <button
-                onClick={isConnected ? disconnect : connect}
-                disabled={isConnecting}
-                className={`w-full cursor-pointer rounded-lg px-6 py-3 font-medium text-white shadow-sm focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:bg-gray-300 disabled:shadow-none ${
-                  isConnected
-                    ? "bg-red-600 hover:bg-red-700 focus:ring-red-600"
-                    : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-600"
-                }`}
-              >
-                {isConnecting ? "Connecting..." : isConnected ? "Disconnect" : "Connect"}
-              </button>
+              <div className={`${isConnected ? "flex gap-4" : ""}`}>
+                {isConnected && (
+                  <button
+                    onClick={handleRecord}
+                    className={`flex-1 cursor-pointer rounded-lg bg-blue-600 px-6 py-3 font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 focus:outline-none`}
+                  >
+                    {isRecording ? "Recording..." : "Push to Talk"}
+                  </button>
+                )}
+
+                <button
+                  onClick={isConnected ? disconnect : connect}
+                  disabled={isConnecting}
+                  className={`${
+                    isConnected ? "flex-1" : "w-full"
+                  } cursor-pointer rounded-lg px-6 py-3 font-medium text-white shadow-sm focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:bg-gray-300 disabled:shadow-none ${
+                    isConnected
+                      ? "bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                      : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-600"
+                  }`}
+                >
+                  {isConnecting ? "Connecting..." : isConnected ? "Disconnect" : "Connect"}
+                </button>
+              </div>
             </div>
           </div>
         </section>

@@ -30,9 +30,7 @@ export async function POST(request: NextRequest) {
         input_audio_transcription: {
           model: "gpt-4o-transcribe",
         },
-        turn_detection: {
-          type: "semantic_vad",
-        },
+        turn_detection: null,
       }),
     });
 

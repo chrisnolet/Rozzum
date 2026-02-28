@@ -20,6 +20,8 @@ interface UseRealtimeResult {
   isConnected: boolean;
   connect: () => Promise<void>;
   disconnect: () => void;
+  commit: () => void;
+  cancel: () => void;
   audioElementRef: React.RefObject<HTMLAudioElement | null>;
 }
 
@@ -154,6 +156,28 @@ export function useRealtime({
     setIsConnected(false);
   };
 
+  const commit = () => {
+    const message = {
+      type: "input_audio_buffer.commit",
+    };
+
+    sendMessage(message);
+    sendResponseRequest(true);
+  };
+
+  const cancel = () => {
+    const cancelMessage = {
+      type: "response.cancel",
+    };
+
+    const clearMessage = {
+      type: "output_audio_buffer.clear",
+    };
+
+    sendMessage(cancelMessage);
+    sendMessage(clearMessage);
+  };
+
   const handleDataChannelOpen = async () => {
     const context = new Context({
       promptCallback: sendPrompt,
@@ -230,6 +254,10 @@ export function useRealtime({
 
       case "error": {
         const error = message.error as { message: string };
+
+        if (error.message === "Cancellation failed: no active response found") {
+          break;
+        }
 
         if (onError) {
           onError(error.message);
@@ -350,6 +378,8 @@ export function useRealtime({
     isConnected,
     connect,
     disconnect,
+    commit,
+    cancel,
     audioElementRef,
   };
 }
