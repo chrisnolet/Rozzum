@@ -1,7 +1,7 @@
 "use client";
 
+import { useRealtime } from "@/hooks/useRealtime";
 import { App } from "@/lib/app";
-import { useRealtime } from "@pocketcomputer/adapters/openai-realtime";
 import { Context } from "@pocketcomputer/core";
 import { useState } from "react";
 
